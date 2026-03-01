@@ -37,7 +37,7 @@ KIE_POLL_TIMEOUT_SECONDS = 120
 
 VEO_GENERATE_URL = "https://api.kie.ai/api/v1/veo/generate"
 VEO_POLL_URL = "https://api.kie.ai/api/v1/veo/get-1080p-video"
-VEO_MODEL = "veo-3-1"
+VEO_MODEL = "veo3_fast"
 VEO_POLL_INTERVAL_SECONDS = 20
 VEO_POLL_TIMEOUT_SECONDS = 300
 
@@ -123,7 +123,11 @@ def _call_openrouter(persona: str, content_idea: str) -> dict:
         cleaned = cleaned[:-3]
     cleaned = cleaned.strip()
 
-    result = json.loads(cleaned)
+    try:
+        result = json.loads(cleaned)
+    except json.JSONDecodeError:
+        logger.error("OpenRouter returned non-JSON content: %r", raw_content)
+        raise
 
     if "post" not in result or "imagePrompt" not in result:
         raise ValueError("OpenRouter response missing required fields 'post' or 'imagePrompt'")
@@ -299,7 +303,7 @@ def generate():
     missing_keys = _validate_api_keys()
     if missing_keys:
         logger.error("Missing API keys: %s", ", ".join(missing_keys))
-        return jsonify({"error": f"Server misconfiguration: missing {', '.join(missing_keys)}"}), 500
+        return jsonify({"error": f"Server misconfiguration: missing {', '.join(missing_keys)}"}), 503
 
     data = request.get_json(silent=True) or {}
 
@@ -357,7 +361,7 @@ def regenerate_image():
     missing_keys = _validate_api_keys()
     if "KIE_API_KEY" in missing_keys:
         logger.error("Missing KIE_API_KEY")
-        return jsonify({"error": "Server misconfiguration: missing KIE_API_KEY"}), 500
+        return jsonify({"error": "Server misconfiguration: missing KIE_API_KEY"}), 503
 
     data = request.get_json(silent=True) or {}
     image_prompt = (data.get("imagePrompt") or "").strip()
@@ -381,7 +385,7 @@ def generate_video():
     """Generate a Veo 3.1 video from a topic: craft prompt via AI, submit to Kie.ai, poll for result."""
     missing_keys = _validate_api_keys()
     if missing_keys:
-        return jsonify({"error": f"Server misconfiguration: missing {', '.join(missing_keys)}"}), 500
+        return jsonify({"error": f"Server misconfiguration: missing {', '.join(missing_keys)}"}), 503
 
     data = request.get_json(silent=True) or {}
     topic = (data.get("topic") or "").strip()
@@ -429,5 +433,6 @@ def health():
 
 
 if __name__ == "__main__":
-    logger.info("Starting LinkedIn Post Generator on port 5001")
-    app.run(host="0.0.0.0", port=5001, debug=True)
+    port = int(os.getenv("PORT", 5001))
+    logger.info("Starting LinkedIn Post Generator on port %d", port)
+    app.run(host="0.0.0.0", port=port, debug=True)
