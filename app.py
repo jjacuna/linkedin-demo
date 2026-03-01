@@ -35,6 +35,26 @@ KIE_RECORD_INFO_URL = "https://api.kie.ai/api/v1/jobs/recordInfo"
 KIE_POLL_INTERVAL_SECONDS = 2
 KIE_POLL_TIMEOUT_SECONDS = 120
 
+VEO_GENERATE_URL = "https://api.kie.ai/api/v1/veo/generate"
+VEO_POLL_URL = "https://api.kie.ai/api/v1/veo/get-1080p-video"
+VEO_MODEL = "veo-3-1"
+VEO_POLL_INTERVAL_SECONDS = 20
+VEO_POLL_TIMEOUT_SECONDS = 300
+
+VEO_SYSTEM_PROMPT = """You are a video prompt engineer specializing in Google Veo 3.1.
+
+Given a topic or idea, write a single detailed video generation prompt optimized for Veo 3.1.
+
+Your prompt must:
+- Be 2-4 sentences describing the visual scene in rich detail
+- Include camera movement (e.g., slow dolly in, aerial drone shot, cinematic tracking shot)
+- Specify lighting and mood (e.g., golden hour, soft diffused light, dramatic shadows)
+- Describe the subject, environment, and atmosphere clearly
+- Specify a visual style (e.g., photorealistic, documentary, commercial, cinematic)
+- Be suitable for a 16:9 professional video
+
+Return ONLY the video prompt text. No quotes, no explanation, no extra text."""
+
 SYSTEM_PROMPT = """You are a LinkedIn ghostwriter and visual content strategist.
 
 You will receive two inputs:
@@ -195,6 +215,75 @@ def _generate_image(image_prompt: str) -> str | None:
 
 
 # ---------------------------------------------------------------------------
+# Veo 3.1 Video Generation
+# ---------------------------------------------------------------------------
+
+def _generate_veo_prompt(topic: str) -> str:
+    """Use OpenRouter to craft an optimized Veo 3.1 video prompt from a topic."""
+    payload = {
+        "model": OPENROUTER_MODEL,
+        "messages": [
+            {"role": "system", "content": VEO_SYSTEM_PROMPT},
+            {"role": "user", "content": topic},
+        ],
+        "temperature": 0.8,
+    }
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    response = requests.post(OPENROUTER_URL, json=payload, headers=headers, timeout=60)
+    response.raise_for_status()
+    data = response.json()
+    return data["choices"][0]["message"]["content"].strip()
+
+
+def _create_veo_task(video_prompt: str) -> str:
+    """Submit a Veo 3.1 generation task. Returns the taskId."""
+    payload = {
+        "prompt": video_prompt,
+        "model": VEO_MODEL,
+        "aspect_ratio": "16:9",
+    }
+    headers = {
+        "Authorization": f"Bearer {KIE_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    response = requests.post(VEO_GENERATE_URL, json=payload, headers=headers, timeout=30)
+    response.raise_for_status()
+    data = response.json()
+    logger.info("Veo createTask response: %s", json.dumps(data, indent=2))
+    if data.get("code") != 200:
+        error_msg = data.get("message") or data.get("msg") or json.dumps(data)
+        raise RuntimeError(f"Veo generate failed: {error_msg}")
+    return data["data"]["taskId"]
+
+
+def _poll_veo_task(task_id: str) -> str:
+    """Poll Veo 1080p endpoint until the video is ready. Returns the video URL."""
+    headers = {"Authorization": f"Bearer {KIE_API_KEY}"}
+    elapsed = 0
+    while elapsed < VEO_POLL_TIMEOUT_SECONDS:
+        time.sleep(VEO_POLL_INTERVAL_SECONDS)
+        elapsed += VEO_POLL_INTERVAL_SECONDS
+        response = requests.get(
+            VEO_POLL_URL,
+            params={"taskId": task_id},
+            headers=headers,
+            timeout=30,
+        )
+        logger.info("Veo poll task %s — HTTP %s (elapsed %ds)", task_id, response.status_code, elapsed)
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("code") == 200:
+                result_url = (data.get("data") or {}).get("resultUrl")
+                if result_url:
+                    return result_url
+        # Non-200 or not ready yet — keep polling
+    raise TimeoutError(f"Veo task {task_id} timed out after {VEO_POLL_TIMEOUT_SECONDS}s")
+
+
+# ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
 
@@ -285,6 +374,48 @@ def regenerate_image():
         "imageUrl": image_url,
         "imagePrompt": image_prompt,
     })
+
+
+@app.route("/generate-video", methods=["POST"])
+def generate_video():
+    """Generate a Veo 3.1 video from a topic: craft prompt via AI, submit to Kie.ai, poll for result."""
+    missing_keys = _validate_api_keys()
+    if missing_keys:
+        return jsonify({"error": f"Server misconfiguration: missing {', '.join(missing_keys)}"}), 500
+
+    data = request.get_json(silent=True) or {}
+    topic = (data.get("topic") or "").strip()
+    if not topic:
+        return jsonify({"error": "Topic is required"}), 400
+
+    # Step 1: Generate an optimized Veo 3.1 prompt
+    try:
+        video_prompt = _generate_veo_prompt(topic)
+        logger.info("Veo prompt generated: %s", video_prompt)
+    except requests.exceptions.RequestException:
+        logger.exception("OpenRouter request failed for Veo prompt")
+        return jsonify({"error": "Could not generate video prompt. Please try again."}), 502
+
+    # Step 2: Submit to Veo 3.1
+    try:
+        task_id = _create_veo_task(video_prompt)
+        logger.info("Veo task created: %s", task_id)
+    except (requests.exceptions.RequestException, RuntimeError):
+        logger.exception("Veo task creation failed")
+        return jsonify({"error": "Video generation service failed. Please try again."}), 502
+
+    # Step 3: Poll until ready
+    try:
+        video_url = _poll_veo_task(task_id)
+        logger.info("Veo video ready: %s", video_url)
+    except TimeoutError:
+        logger.error("Veo task %s timed out", task_id)
+        return jsonify({"error": "Video generation timed out. Please try again."}), 504
+    except Exception:
+        logger.exception("Veo polling failed")
+        return jsonify({"error": "Video generation failed during processing."}), 502
+
+    return jsonify({"videoUrl": video_url, "videoPrompt": video_prompt})
 
 
 @app.route("/health")

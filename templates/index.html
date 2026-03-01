@@ -315,6 +315,76 @@
       </button>
     </div>
 
+    <!-- Video Generation Section -->
+    <div class="glass-card p-6 mb-8">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/>
+        </svg>
+        Generate Video with Veo 3.1
+      </h2>
+
+      <div class="flex flex-col sm:flex-row gap-3 mb-4">
+        <textarea
+          id="video-topic"
+          rows="2"
+          maxlength="2000"
+          class="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-macos text-sm text-gray-900 placeholder-gray-400 resize-none"
+          placeholder="Describe your video idea, e.g. 'A founder launching their startup at sunrise over a city skyline'..."
+          aria-label="Video topic or idea"
+        ></textarea>
+        <button
+          id="generate-video-btn"
+          disabled
+          class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gray-900 text-white text-sm font-semibold rounded-macos hover:bg-gray-800 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed sm:self-start min-h-[52px] whitespace-nowrap"
+          aria-label="Generate video"
+        >
+          <svg id="video-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/>
+          </svg>
+          <svg id="video-spinner" class="w-4 h-4 spinner hidden" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <span id="video-btn-text">Generate Video</span>
+        </button>
+      </div>
+
+      <!-- Status message shown during generation -->
+      <p id="video-status" class="hidden text-xs text-gray-400 mb-4">Crafting video prompt, then generating with Veo 3.1 — this takes 1–3 minutes...</p>
+
+      <!-- Generated video prompt display -->
+      <div id="video-prompt-display" class="hidden mb-4 p-3 bg-gray-50 border border-gray-100 rounded-macos">
+        <p class="text-xs font-medium text-gray-500 mb-1">AI-crafted video prompt</p>
+        <p id="video-prompt-text" class="text-sm text-gray-700"></p>
+      </div>
+
+      <!-- Video player -->
+      <div id="video-output" class="hidden">
+        <div class="relative rounded-macos overflow-hidden bg-black" style="aspect-ratio: 16/9;">
+          <video
+            id="veo-video"
+            class="w-full h-full object-contain"
+            controls
+            playsinline
+            aria-label="Generated Veo 3.1 video"
+          ></video>
+        </div>
+        <div class="flex items-center gap-3 mt-3">
+          <button
+            id="download-video-btn"
+            class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-macos hover:bg-gray-800 active:scale-[0.98] min-h-[44px]"
+            aria-label="Download generated video"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            Download Video
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Output Section (hidden initially) -->
     <div id="output-section" class="hidden">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -434,6 +504,18 @@
       /*  DOM References                                                     */
       /* ------------------------------------------------------------------ */
       const els = {
+        // Video
+        videoTopic:          document.getElementById('video-topic'),
+        generateVideoBtn:    document.getElementById('generate-video-btn'),
+        videoIcon:           document.getElementById('video-icon'),
+        videoSpinner:        document.getElementById('video-spinner'),
+        videoBtnText:        document.getElementById('video-btn-text'),
+        videoStatus:         document.getElementById('video-status'),
+        videoPromptDisplay:  document.getElementById('video-prompt-display'),
+        videoPromptText:     document.getElementById('video-prompt-text'),
+        videoOutput:         document.getElementById('video-output'),
+        veoVideo:            document.getElementById('veo-video'),
+        downloadVideoBtn:    document.getElementById('download-video-btn'),
         // Profile
         whoYouAre:        document.getElementById('who-you-are'),
         whatYouDo:        document.getElementById('what-you-do'),
@@ -478,6 +560,111 @@
         // Toast
         toastContainer:   document.getElementById('toast-container'),
       };
+
+      /* ------------------------------------------------------------------ */
+      /*  Video Generation                                                   */
+      /* ------------------------------------------------------------------ */
+      let isGeneratingVideo = false;
+      let currentVideoUrl = '';
+
+      function updateVideoBtn() {
+        var hasTopic = els.videoTopic.value.trim().length > 0;
+        els.generateVideoBtn.disabled = !hasTopic || isGeneratingVideo;
+      }
+
+      function setVideoGenerating(active) {
+        isGeneratingVideo = active;
+        if (active) {
+          els.videoIcon.classList.add('hidden');
+          els.videoSpinner.classList.remove('hidden');
+          els.videoBtnText.textContent = 'Generating...';
+          els.generateVideoBtn.disabled = true;
+          els.videoStatus.classList.remove('hidden');
+        } else {
+          els.videoIcon.classList.remove('hidden');
+          els.videoSpinner.classList.add('hidden');
+          els.videoBtnText.textContent = 'Generate Video';
+          els.videoStatus.classList.add('hidden');
+          updateVideoBtn();
+        }
+      }
+
+      async function generateVideo() {
+        if (isGeneratingVideo) return;
+        var topic = els.videoTopic.value.trim();
+        if (!topic) return;
+
+        setVideoGenerating(true);
+        els.videoOutput.classList.add('hidden');
+        els.videoPromptDisplay.classList.add('hidden');
+
+        try {
+          var response = await fetch('/generate-video', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ topic: topic }),
+          });
+
+          var data;
+          try { data = await response.json(); } catch (e) { data = {}; }
+
+          if (!response.ok) {
+            throw new Error(data.error || 'Video generation failed (HTTP ' + response.status + ')');
+          }
+
+          // Show AI-crafted prompt
+          if (data.videoPrompt) {
+            els.videoPromptText.textContent = data.videoPrompt;
+            els.videoPromptDisplay.classList.remove('hidden');
+          }
+
+          // Show video
+          if (data.videoUrl) {
+            currentVideoUrl = data.videoUrl;
+            els.veoVideo.src = data.videoUrl;
+            els.videoOutput.classList.remove('hidden');
+            els.videoOutput.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            showToast('Video ready!');
+          } else {
+            throw new Error('No video URL returned');
+          }
+        } catch (err) {
+          showToast(err.message || 'Video generation failed', 'error');
+        } finally {
+          setVideoGenerating(false);
+        }
+      }
+
+      async function downloadVideo() {
+        if (!currentVideoUrl) { showToast('No video to download', 'error'); return; }
+        try {
+          var response = await fetch(currentVideoUrl);
+          var blob = await response.blob();
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = 'veo-video.mp4';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+          showToast('Downloaded!');
+        } catch (err) {
+          showToast('Failed to download video', 'error');
+        }
+      }
+
+      els.videoTopic.addEventListener('input', updateVideoBtn);
+      els.generateVideoBtn.addEventListener('click', generateVideo);
+      els.downloadVideoBtn.addEventListener('click', downloadVideo);
+      els.videoTopic.addEventListener('keydown', function (e) {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !els.generateVideoBtn.disabled) {
+          e.preventDefault();
+          generateVideo();
+        }
+      });
+
+      updateVideoBtn();
 
       /* ------------------------------------------------------------------ */
       /*  State                                                              */
