@@ -125,6 +125,11 @@ def _call_openrouter(persona: str, content_idea: str) -> dict:
         cleaned = cleaned[:-3]
     cleaned = cleaned.strip()
 
+    # Detect model refusals before attempting JSON parse
+    if not cleaned.startswith("{"):
+        logger.error("OpenRouter returned a refusal or non-JSON response: %r", raw_content)
+        raise ValueError(f"AI refused or returned unexpected content: {cleaned[:200]}")
+
     try:
         result = json.loads(cleaned)
     except json.JSONDecodeError:
