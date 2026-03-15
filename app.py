@@ -1,6 +1,6 @@
 """
-LinkedIn Post Generator — Flask Backend
-Generates LinkedIn posts using OpenRouter (Gemini 2.5 Flash)
+Golden Crumb Bakery — Social Media Content Generator
+Generates platform-specific social media posts using OpenRouter (Gemini 2.5 Flash)
 and professional images using Kie.ai Nano Banana.
 """
 
@@ -56,27 +56,76 @@ Your prompt must:
 
 Return ONLY the video prompt text. No quotes, no explanation, no extra text."""
 
-SYSTEM_PROMPT = """You are a LinkedIn ghostwriter and brand strategist specializing in artisan food businesses, particularly cookie stores and bakeries.
+BAKERY_PERSONA = """Golden Crumb Bakery — a premium artisan cookie shop in Austin, TX.
+We handcraft small-batch cookies, brownies, and seasonal baked goods using locally sourced butter, real vanilla, and Belgian chocolate.
+Our brand is warm, community-driven, and unapologetically indulgent.
+We offer walk-in ordering, local delivery, custom cookie boxes for events, and corporate catering.
+Website: goldencrumbbakery.com | Instagram: @goldencrumbbakery
+Call to action: Order online or visit us in East Austin."""
 
-You will receive two inputs:
-1. A business persona — who the person is, what they do, and their call-to-action.
-2. A content idea — the topic or angle for the post.
+PLATFORM_INSTRUCTIONS = {
+    "linkedin": {
+        "name": "LinkedIn",
+        "char_limit": 3000,
+        "instructions": """Write a professional yet warm LinkedIn post. Structure it with:
+- A powerful hook (first 1-2 lines) that connects the bakery story to business insights, entrepreneurship, or community
+- A compelling body using short paragraphs and line breaks — weave in storytelling, behind-the-scenes, lessons from running a food business
+- A persuasive call-to-action
+- Relevant hashtags (3-5, mix of #SmallBusiness #ArtisanBakery #FoodBusiness #Austin #Cookies)
+Tone: Professional, authentic, story-driven. Show the human side of the business.""",
+    },
+    "instagram": {
+        "name": "Instagram",
+        "char_limit": 2200,
+        "instructions": """Write a captivating Instagram caption. Structure it with:
+- An attention-grabbing first line (this shows in the preview before "more")
+- Engaging body with personality, emojis used naturally (not excessively), and line breaks
+- A call-to-action (e.g., "Tag someone who needs cookies", "Link in bio to order", "Drop a cookie emoji if you agree")
+- Relevant hashtags (15-20 mix of niche and broad: #CookiesOfInstagram #AustinFoodie #ArtisanCookies #BakeryLife #FoodPorn #SmallBatchBaking #ATXEats etc.)
+Tone: Fun, visual, craving-inducing, community-oriented.""",
+    },
+    "twitter": {
+        "name": "X / Twitter",
+        "char_limit": 280,
+        "instructions": """Write a punchy tweet (max 280 characters including hashtags). Make it:
+- Concise and scroll-stopping
+- Conversational, witty, or mouth-watering
+- Include 1-3 relevant hashtags only if they fit naturally
+- Can include a CTA like "RT if you agree" or "Link in bio"
+Tone: Snappy, relatable, sometimes funny. Think short and shareable.""",
+    },
+    "facebook": {
+        "name": "Facebook",
+        "char_limit": 5000,
+        "instructions": """Write an engaging Facebook post. Structure it with:
+- A warm, conversational opening that feels like talking to a neighbor
+- Storytelling body — behind-the-scenes, customer stories, seasonal specials, community involvement
+- A clear call-to-action (order link, visit us, comment below)
+- 3-5 relevant hashtags
+Tone: Friendly, community-focused, inviting. Like chatting with your favorite local shop owner.""",
+    },
+}
+
+SYSTEM_PROMPT_TEMPLATE = """You are a social media content creator and brand strategist for an artisan bakery.
+
+Here is the business you are writing for:
+{persona}
+
+Platform: {platform_name}
+Platform guidelines:
+{platform_instructions}
 
 Your job:
-1. Write an engaging LinkedIn post in the persona's authentic voice that drives business growth and brand affinity for a cookie store. Structure it with:
-   - A powerful hook that evokes emotion, nostalgia, or curiosity (first 1-2 lines that stop the scroll — e.g., lead with a bold statement about craft, community, or the business journey)
-   - A compelling body using short paragraphs and line breaks that weaves in storytelling, behind-the-scenes insight, customer love, or business lessons from running a cookie brand
-   - A persuasive call-to-action that drives orders, visits, catering inquiries, or brand awareness
-   - Relevant hashtags (3-5, mix of niche bakery tags and broader business tags like #SmallBusiness, #Cookies, #ArtisanBakery, #FoodBusiness)
+1. Write an engaging social media post optimized for {platform_name} that drives business growth, brand affinity, and cravings.
 2. Generate an image prompt for Nano Banana image generation that makes viewers crave the product. The image should be:
    - 1:1 square aspect ratio
-   - Feature beautifully styled cookies or bakery scenes — think warm tones, rustic wood surfaces, artisan packaging, melted chocolate drizzles, or stacked cookie towers
+   - Feature beautifully styled cookies or bakery scenes — warm tones, rustic wood surfaces, artisan packaging, melted chocolate drizzles, stacked cookie towers
    - Evoke indulgence, warmth, and handcrafted quality
    - Shot in a clean, editorial food photography style with soft natural lighting
-   - Professional and shareable on LinkedIn
+   - Professional and shareable on {platform_name}
 
 Return ONLY valid JSON with no markdown formatting, no code fences, no extra text:
-{"post": "the full linkedin post text here", "imagePrompt": "the image generation prompt here"}"""
+{{"post": "the full social media post text here", "imagePrompt": "the image generation prompt here"}}"""
 
 
 def _validate_api_keys():
@@ -89,17 +138,22 @@ def _validate_api_keys():
     return missing
 
 
-def _call_openrouter(persona: str, content_idea: str) -> dict:
-    """Call OpenRouter with persona and content idea, return parsed JSON with post and imagePrompt."""
-    user_message = (
-        f"Business Persona:\n{persona}\n\n"
-        f"Content Idea:\n{content_idea}"
+def _call_openrouter(content_idea: str, platform: str = "instagram") -> dict:
+    """Call OpenRouter with content idea and platform, return parsed JSON with post and imagePrompt."""
+    platform_config = PLATFORM_INSTRUCTIONS.get(platform, PLATFORM_INSTRUCTIONS["instagram"])
+
+    system_prompt = SYSTEM_PROMPT_TEMPLATE.format(
+        persona=BAKERY_PERSONA,
+        platform_name=platform_config["name"],
+        platform_instructions=platform_config["instructions"],
     )
+
+    user_message = f"Content Idea:\n{content_idea}"
 
     payload = {
         "model": OPENROUTER_MODEL,
         "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_message},
         ],
         "temperature": 0.7,
@@ -314,30 +368,17 @@ def generate():
 
     data = request.get_json(silent=True) or {}
 
-    # Persona can be an object {whoYouAre, whatYouDo, callToAction} or a plain string
-    raw_persona = data.get("persona", "")
-    if isinstance(raw_persona, dict):
-        parts = []
-        if raw_persona.get("whoYouAre"):
-            parts.append(f"Who I am: {raw_persona['whoYouAre']}")
-        if raw_persona.get("whatYouDo"):
-            parts.append(f"What I do: {raw_persona['whatYouDo']}")
-        if raw_persona.get("callToAction"):
-            parts.append(f"Call to action: {raw_persona['callToAction']}")
-        persona = "\n".join(parts).strip()
-    else:
-        persona = (raw_persona or "").strip()
-
     content_idea = (data.get("contentIdea") or data.get("content") or "").strip()
+    platform = (data.get("platform") or "instagram").strip().lower()
 
-    if not persona:
-        return jsonify({"error": "Persona is required"}), 400
+    if platform not in PLATFORM_INSTRUCTIONS:
+        return jsonify({"error": f"Unsupported platform: {platform}"}), 400
     if not content_idea:
         return jsonify({"error": "Content idea is required"}), 400
 
     # Step 1: Generate post text and image prompt via OpenRouter
     try:
-        ai_result = _call_openrouter(persona, content_idea)
+        ai_result = _call_openrouter(content_idea, platform)
     except requests.exceptions.HTTPError as exc:
         logger.exception("OpenRouter HTTP error")
         status = exc.response.status_code if exc.response is not None else 502
@@ -355,10 +396,14 @@ def generate():
     # Step 2: Generate image via Kie.ai (non-blocking failure)
     image_url = _generate_image(image_prompt)
 
+    platform_config = PLATFORM_INSTRUCTIONS[platform]
     return jsonify({
         "post": post_text,
         "imagePrompt": image_prompt,
         "imageUrl": image_url,
+        "platform": platform,
+        "platformName": platform_config["name"],
+        "charLimit": platform_config["char_limit"],
     })
 
 
@@ -441,5 +486,5 @@ def health():
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5001))
-    logger.info("Starting LinkedIn Post Generator on port %d", port)
+    logger.info("Starting Golden Crumb Social Media Generator on port %d", port)
     app.run(host="0.0.0.0", port=port, debug=True)

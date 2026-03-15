@@ -3,16 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LinkedIn Post Generator</title>
+  <title>Golden Crumb Bakery — Social Media Generator</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
           colors: {
-            linkedin: '#0A66C2',
-            'linkedin-hover': '#004182',
-            surface: '#F5F5F7',
+            brand: '#B5651D',
+            'brand-hover': '#8B4513',
+            'brand-light': '#FFF8F0',
+            'brand-accent': '#D4A574',
+            surface: '#FFFAF5',
           },
           fontFamily: {
             sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
@@ -26,152 +28,100 @@
     };
   </script>
   <style>
-    /* Frosted glass panel */
     .glass-card {
       background: rgba(255, 255, 255, 0.72);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border: 1px solid rgba(0, 0, 0, 0.06);
       border-radius: 16px;
-      box-shadow:
-        0 1px 3px rgba(0, 0, 0, 0.04),
-        0 4px 12px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06);
       transition: box-shadow 0.3s ease, transform 0.3s ease;
     }
-
     .glass-card:hover {
-      box-shadow:
-        0 2px 6px rgba(0, 0, 0, 0.06),
-        0 8px 24px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08);
     }
-
-    /* Textarea styling */
-    textarea, input {
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    }
-
+    textarea, input { transition: border-color 0.2s ease, box-shadow 0.2s ease; }
     textarea:focus, input:focus {
-      border-color: #0A66C2;
-      box-shadow: 0 0 0 3px rgba(10, 102, 194, 0.12);
+      border-color: #B5651D;
+      box-shadow: 0 0 0 3px rgba(181, 101, 29, 0.12);
       outline: none;
     }
+    button { transition: all 0.2s ease; }
 
-    /* Button transitions */
-    button {
-      transition: all 0.2s ease;
-    }
-
-    /* Skeleton shimmer */
     @keyframes shimmer {
       0% { background-position: -400px 0; }
       100% { background-position: 400px 0; }
     }
-
     .skeleton {
       background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
       background-size: 800px 100%;
       animation: shimmer 1.8s ease-in-out infinite;
     }
-
-    /* Fade in for output section */
     @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(16px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    .fade-in-up { animation: fadeInUp 0.5s ease forwards; }
 
-    .fade-in-up {
-      animation: fadeInUp 0.5s ease forwards;
+    @keyframes toastIn { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100%); } }
+    .toast-enter { animation: toastIn 0.3s ease forwards; }
+    .toast-exit { animation: toastOut 0.3s ease forwards; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { animation: spin 0.8s linear infinite; }
+
+    .post-preview {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-size: 14px; line-height: 1.5; color: rgba(0,0,0,0.9);
+      white-space: pre-wrap; word-wrap: break-word;
+    }
+    .image-container {
+      position: relative; width: 100%; padding-bottom: 100%;
+      overflow: hidden; border-radius: 12px; background: #f3f4f6;
+    }
+    .image-container img {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
+    }
+    textarea::-webkit-scrollbar { width: 6px; }
+    textarea::-webkit-scrollbar-track { background: transparent; }
+    textarea::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
+    textarea::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
+
+    /* Platform selector */
+    .platform-btn {
+      padding: 10px 18px;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #6b7280;
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 44px;
+    }
+    .platform-btn:hover {
+      border-color: #D4A574;
+      color: #B5651D;
+      background: #FFF8F0;
+    }
+    .platform-btn.active {
+      border-color: #B5651D;
+      color: #B5651D;
+      background: #FFF8F0;
+      box-shadow: 0 0 0 3px rgba(181, 101, 29, 0.12);
     }
 
-    /* Toast slide in */
-    @keyframes toastIn {
-      from { opacity: 0; transform: translateX(100%); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-
-    @keyframes toastOut {
-      from { opacity: 1; transform: translateX(0); }
-      to { opacity: 0; transform: translateX(100%); }
-    }
-
-    .toast-enter {
-      animation: toastIn 0.3s ease forwards;
-    }
-
-    .toast-exit {
-      animation: toastOut 0.3s ease forwards;
-    }
-
-    /* Collapse animation */
     .collapsible-content {
-      max-height: 600px;
-      overflow: hidden;
+      max-height: 600px; overflow: hidden;
       transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.4s ease;
       opacity: 1;
     }
-
-    .collapsible-content.collapsed {
-      max-height: 0;
-      opacity: 0;
-      padding-top: 0;
-      padding-bottom: 0;
-    }
-
-    /* Spinner */
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .spinner {
-      animation: spin 0.8s linear infinite;
-    }
-
-    /* Post preview styling */
-    .post-preview {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      font-size: 14px;
-      line-height: 1.5;
-      color: rgba(0, 0, 0, 0.9);
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
-
-    /* Image container */
-    .image-container {
-      position: relative;
-      width: 100%;
-      padding-bottom: 100%;
-      overflow: hidden;
-      border-radius: 12px;
-      background: #f3f4f6;
-    }
-
-    .image-container img {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    /* Scrollbar styling */
-    textarea::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    textarea::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    textarea::-webkit-scrollbar-thumb {
-      background: rgba(0, 0, 0, 0.15);
-      border-radius: 3px;
-    }
-
-    textarea::-webkit-scrollbar-thumb:hover {
-      background: rgba(0, 0, 0, 0.25);
-    }
+    .collapsible-content.collapsed { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; }
   </style>
 </head>
 <body class="bg-surface min-h-screen font-sans antialiased">
@@ -185,93 +135,42 @@
     <!-- Header -->
     <header class="text-center mb-10">
       <div class="inline-flex items-center gap-3 mb-2">
-        <svg class="w-8 h-8 text-linkedin" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-        </svg>
-        <h1 class="text-3xl sm:text-4xl font-semibold text-gray-900 tracking-tight">LinkedIn Post Generator</h1>
+        <span class="text-4xl" aria-hidden="true">&#127850;</span>
+        <h1 class="text-3xl sm:text-4xl font-semibold text-gray-900 tracking-tight">Golden Crumb Bakery</h1>
       </div>
-      <p class="text-gray-500 text-base mt-1">Create engaging posts with AI-powered content and visuals</p>
+      <p class="text-gray-500 text-base mt-1">Social Media Content Generator — AI-powered posts &amp; visuals for every platform</p>
     </header>
 
     <!-- Input Section -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
 
-      <!-- Left Card: Business Profile -->
+      <!-- Left Card: Platform Selector -->
       <div class="glass-card p-6">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-            </svg>
-            Your Business Profile
-          </h2>
-          <button
-            id="profile-edit-btn"
-            class="hidden text-sm font-medium text-linkedin hover:text-linkedin-hover px-3 py-1.5 rounded-lg hover:bg-blue-50 min-h-[44px] min-w-[44px] items-center justify-center"
-            aria-label="Edit business profile"
-          >
-            Edit
+        <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+          </svg>
+          Choose Platform
+        </h2>
+        <div class="grid grid-cols-2 gap-3" id="platform-selector" role="radiogroup" aria-label="Select social media platform">
+          <button class="platform-btn active" data-platform="instagram" role="radio" aria-checked="true">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+            Instagram
+          </button>
+          <button class="platform-btn" data-platform="facebook" role="radio" aria-checked="false">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            Facebook
+          </button>
+          <button class="platform-btn" data-platform="linkedin" role="radio" aria-checked="false">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+            LinkedIn
+          </button>
+          <button class="platform-btn" data-platform="twitter" role="radio" aria-checked="false">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            X / Twitter
           </button>
         </div>
-
-        <!-- Collapsed Summary -->
-        <div id="profile-summary" class="hidden mb-4 p-4 bg-gray-50 rounded-macos border border-gray-100">
-          <p class="text-sm text-gray-700"><span class="font-medium text-gray-900">Who you are:</span> <span id="summary-who"></span></p>
-          <p class="text-sm text-gray-700 mt-1"><span class="font-medium text-gray-900">What you do:</span> <span id="summary-what"></span></p>
-          <p class="text-sm text-gray-700 mt-1"><span class="font-medium text-gray-900">CTA:</span> <span id="summary-cta"></span></p>
-        </div>
-
-        <!-- Editable Fields -->
-        <div id="profile-fields" class="collapsible-content">
-          <div class="space-y-4">
-            <div>
-              <label for="who-you-are" class="block text-sm font-medium text-gray-700 mb-1.5">Who You Are</label>
-              <textarea
-                id="who-you-are"
-                rows="3"
-                class="w-full px-4 py-3 bg-white border border-gray-200 rounded-macos text-sm text-gray-900 placeholder-gray-400 resize-none"
-                placeholder="e.g., Marketing consultant specializing in B2B SaaS..."
-                aria-label="Describe who you are"
-              ></textarea>
-            </div>
-            <div>
-              <label for="what-you-do" class="block text-sm font-medium text-gray-700 mb-1.5">What You Do</label>
-              <textarea
-                id="what-you-do"
-                rows="3"
-                class="w-full px-4 py-3 bg-white border border-gray-200 rounded-macos text-sm text-gray-900 placeholder-gray-400 resize-none"
-                placeholder="e.g., I help companies build automated content pipelines..."
-                aria-label="Describe what you do"
-              ></textarea>
-            </div>
-            <div>
-              <label for="call-to-action" class="block text-sm font-medium text-gray-700 mb-1.5">Call to Action</label>
-              <textarea
-                id="call-to-action"
-                rows="2"
-                class="w-full px-4 py-3 bg-white border border-gray-200 rounded-macos text-sm text-gray-900 placeholder-gray-400 resize-none"
-                placeholder="e.g., Book a free strategy call at..."
-                aria-label="Your call to action"
-              ></textarea>
-            </div>
-          </div>
-          <div class="flex items-center gap-3 mt-5">
-            <button
-              id="save-profile-btn"
-              class="px-5 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-macos hover:bg-gray-800 active:scale-[0.98] min-h-[44px]"
-              aria-label="Save business profile"
-            >
-              Save Profile
-            </button>
-            <button
-              id="clear-profile-btn"
-              class="px-5 py-2.5 bg-white text-gray-600 text-sm font-medium rounded-macos border border-gray-200 hover:bg-gray-50 hover:text-gray-900 active:scale-[0.98] min-h-[44px]"
-              aria-label="Clear saved profile"
-            >
-              Clear
-            </button>
-          </div>
-        </div>
+        <p class="text-xs text-gray-400 mt-3" id="platform-hint">Posts will be optimized for Instagram's style and character limits.</p>
       </div>
 
       <!-- Right Card: Content Idea -->
@@ -284,10 +183,10 @@
         </h2>
         <textarea
           id="content-idea"
-          rows="12"
+          rows="10"
           maxlength="10000"
           class="w-full px-4 py-3 bg-white border border-gray-200 rounded-macos text-sm text-gray-900 placeholder-gray-400 resize-none"
-          placeholder="Paste an article, write bullet points, or describe your idea..."
+          placeholder="e.g., We just launched our new summer cookie collection with lemon lavender and mango chili flavors..."
           aria-label="Your content idea or source material"
         ></textarea>
         <p class="text-xs text-gray-400 mt-2 text-right">
@@ -301,8 +200,8 @@
       <button
         id="generate-btn"
         disabled
-        class="inline-flex items-center justify-center gap-2.5 px-10 py-4 bg-linkedin text-white text-base font-semibold rounded-macos-lg shadow-lg shadow-blue-500/20 hover:bg-linkedin-hover hover:shadow-xl hover:shadow-blue-500/25 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-lg disabled:hover:bg-linkedin disabled:active:scale-100 min-h-[52px] min-w-[260px]"
-        aria-label="Generate LinkedIn post"
+        class="inline-flex items-center justify-center gap-2.5 px-10 py-4 bg-brand text-white text-base font-semibold rounded-macos-lg shadow-lg shadow-orange-500/20 hover:bg-brand-hover hover:shadow-xl hover:shadow-orange-500/25 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-lg disabled:hover:bg-brand disabled:active:scale-100 min-h-[52px] min-w-[260px]"
+        aria-label="Generate social media post"
       >
         <svg id="generate-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
@@ -311,7 +210,7 @@
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
         </svg>
-        <span id="generate-text">Generate LinkedIn Post</span>
+        <span id="generate-text">Generate Post</span>
       </button>
     </div>
 
@@ -323,14 +222,13 @@
         </svg>
         Generate Video with Veo 3.1
       </h2>
-
       <div class="flex flex-col sm:flex-row gap-3 mb-4">
         <textarea
           id="video-topic"
           rows="2"
           maxlength="2000"
           class="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-macos text-sm text-gray-900 placeholder-gray-400 resize-none"
-          placeholder="Describe your video idea, e.g. 'A founder launching their startup at sunrise over a city skyline'..."
+          placeholder="e.g., 'Close-up of warm chocolate chip cookies fresh out of the oven with steam rising'..."
           aria-label="Video topic or idea"
         ></textarea>
         <button
@@ -349,36 +247,18 @@
           <span id="video-btn-text">Generate Video</span>
         </button>
       </div>
-
-      <!-- Status message shown during generation -->
-      <p id="video-status" class="hidden text-xs text-gray-400 mb-4">Crafting video prompt, then generating with Veo 3.1 — this takes 1–3 minutes...</p>
-
-      <!-- Generated video prompt display -->
+      <p id="video-status" class="hidden text-xs text-gray-400 mb-4">Crafting video prompt, then generating with Veo 3.1 — this takes 1-3 minutes...</p>
       <div id="video-prompt-display" class="hidden mb-4 p-3 bg-gray-50 border border-gray-100 rounded-macos">
         <p class="text-xs font-medium text-gray-500 mb-1">AI-crafted video prompt</p>
         <p id="video-prompt-text" class="text-sm text-gray-700"></p>
       </div>
-
-      <!-- Video player -->
       <div id="video-output" class="hidden">
         <div class="relative rounded-macos overflow-hidden bg-black" style="aspect-ratio: 16/9;">
-          <video
-            id="veo-video"
-            class="w-full h-full object-contain"
-            controls
-            playsinline
-            aria-label="Generated Veo 3.1 video"
-          ></video>
+          <video id="veo-video" class="w-full h-full object-contain" controls playsinline aria-label="Generated Veo 3.1 video"></video>
         </div>
         <div class="flex items-center gap-3 mt-3">
-          <button
-            id="download-video-btn"
-            class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-macos hover:bg-gray-800 active:scale-[0.98] min-h-[44px]"
-            aria-label="Download generated video"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-            </svg>
+          <button id="download-video-btn" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-macos hover:bg-gray-800 active:scale-[0.98] min-h-[44px]" aria-label="Download generated video">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
             Download Video
           </button>
         </div>
@@ -389,31 +269,22 @@
     <div id="output-section" class="hidden">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        <!-- Left Output: LinkedIn Post -->
+        <!-- Left Output: Post -->
         <div class="glass-card p-6 fade-in-up">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <svg class="w-5 h-5 text-linkedin" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
               </svg>
-              Your LinkedIn Post
+              <span id="output-platform-label">Your Instagram Post</span>
             </h2>
-            <span id="post-char-count" class="text-xs text-gray-400 font-medium">0 / 3,000</span>
+            <span id="post-char-count" class="text-xs text-gray-400 font-medium">0 / 2,200</span>
           </div>
-
-          <!-- Post Preview -->
           <div class="bg-white border border-gray-100 rounded-macos p-5 mb-4 min-h-[200px]">
-            <div class="post-preview" id="post-output" aria-label="Generated LinkedIn post text"></div>
+            <div class="post-preview" id="post-output" aria-label="Generated post text"></div>
           </div>
-
-          <button
-            id="copy-text-btn"
-            class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-macos hover:bg-gray-800 active:scale-[0.98] min-h-[44px]"
-            aria-label="Copy post text to clipboard"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-            </svg>
+          <button id="copy-text-btn" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-macos hover:bg-gray-800 active:scale-[0.98] min-h-[44px]" aria-label="Copy post text to clipboard">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
             Copy Text
           </button>
         </div>
@@ -421,67 +292,33 @@
         <!-- Right Output: Generated Image -->
         <div class="glass-card p-6 fade-in-up" style="animation-delay: 0.1s;">
           <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <svg class="w-5 h-5 text-linkedin" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
             Generated Image
           </h2>
-
-          <!-- Image Prompt Editor -->
           <div class="mb-4">
             <label for="image-prompt" class="block text-sm font-medium text-gray-700 mb-1.5">Image Prompt</label>
-            <textarea
-              id="image-prompt"
-              rows="3"
-              class="w-full px-4 py-3 bg-white border border-gray-200 rounded-macos text-sm text-gray-900 placeholder-gray-400 resize-none"
-              aria-label="Editable image generation prompt"
-            ></textarea>
-            <button
-              id="regenerate-image-btn"
-              class="mt-2 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-linkedin bg-blue-50 rounded-macos hover:bg-blue-100 active:scale-[0.98] min-h-[44px]"
-              aria-label="Regenerate image with updated prompt"
-            >
-              <svg id="regen-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-              </svg>
-              <svg id="regen-spinner" class="w-4 h-4 spinner hidden" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-              </svg>
+            <textarea id="image-prompt" rows="3" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-macos text-sm text-gray-900 placeholder-gray-400 resize-none" aria-label="Editable image generation prompt"></textarea>
+            <button id="regenerate-image-btn" class="mt-2 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand bg-brand-light rounded-macos hover:bg-orange-100 active:scale-[0.98] min-h-[44px]" aria-label="Regenerate image with updated prompt">
+              <svg id="regen-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <svg id="regen-spinner" class="w-4 h-4 spinner hidden" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
               Regenerate Image
             </button>
           </div>
-
-          <!-- Image Preview -->
           <div id="image-wrapper" class="mb-4">
-            <div id="image-skeleton" class="image-container skeleton hidden">
-              <div class="absolute inset-0"></div>
-            </div>
+            <div id="image-skeleton" class="image-container skeleton hidden"><div class="absolute inset-0"></div></div>
             <div id="image-preview-container" class="image-container hidden">
-              <img id="generated-image" src="" alt="AI-generated image for LinkedIn post" crossorigin="anonymous"/>
+              <img id="generated-image" src="" alt="AI-generated image for social media post" crossorigin="anonymous"/>
             </div>
           </div>
-
-          <!-- Image Action Buttons -->
           <div id="image-actions" class="hidden flex items-center gap-3">
-            <button
-              id="download-image-btn"
-              class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-macos hover:bg-gray-800 active:scale-[0.98] min-h-[44px]"
-              aria-label="Download generated image"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-              </svg>
+            <button id="download-image-btn" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-macos hover:bg-gray-800 active:scale-[0.98] min-h-[44px]" aria-label="Download generated image">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
               Download Image
             </button>
-            <button
-              id="copy-image-btn"
-              class="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-macos border border-gray-200 hover:bg-gray-50 hover:text-gray-900 active:scale-[0.98] min-h-[44px]"
-              aria-label="Copy generated image to clipboard"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-              </svg>
+            <button id="copy-image-btn" class="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-macos border border-gray-200 hover:bg-gray-50 hover:text-gray-900 active:scale-[0.98] min-h-[44px]" aria-label="Copy generated image to clipboard">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
               Copy Image
             </button>
           </div>
@@ -492,11 +329,6 @@
   </div>
 
   <script>
-    /**
-     * LinkedIn Post Generator — Frontend Application
-     * Handles profile persistence, content generation, image management,
-     * and all user interactions with proper error handling and loading states.
-     */
     (function () {
       'use strict';
 
@@ -516,18 +348,10 @@
         videoOutput:         document.getElementById('video-output'),
         veoVideo:            document.getElementById('veo-video'),
         downloadVideoBtn:    document.getElementById('download-video-btn'),
-        // Profile
-        whoYouAre:        document.getElementById('who-you-are'),
-        whatYouDo:        document.getElementById('what-you-do'),
-        callToAction:     document.getElementById('call-to-action'),
-        saveProfileBtn:   document.getElementById('save-profile-btn'),
-        clearProfileBtn:  document.getElementById('clear-profile-btn'),
-        editProfileBtn:   document.getElementById('profile-edit-btn'),
-        profileFields:    document.getElementById('profile-fields'),
-        profileSummary:   document.getElementById('profile-summary'),
-        summaryWho:       document.getElementById('summary-who'),
-        summaryWhat:      document.getElementById('summary-what'),
-        summaryCta:       document.getElementById('summary-cta'),
+
+        // Platform
+        platformSelector:    document.getElementById('platform-selector'),
+        platformHint:        document.getElementById('platform-hint'),
 
         // Content
         contentIdea:      document.getElementById('content-idea'),
@@ -540,10 +364,11 @@
         generateText:     document.getElementById('generate-text'),
 
         // Output
-        outputSection:    document.getElementById('output-section'),
-        postOutput:       document.getElementById('post-output'),
-        postCharCount:    document.getElementById('post-char-count'),
-        copyTextBtn:      document.getElementById('copy-text-btn'),
+        outputSection:        document.getElementById('output-section'),
+        outputPlatformLabel:  document.getElementById('output-platform-label'),
+        postOutput:           document.getElementById('post-output'),
+        postCharCount:        document.getElementById('post-char-count'),
+        copyTextBtn:          document.getElementById('copy-text-btn'),
 
         // Image
         imagePrompt:          document.getElementById('image-prompt'),
@@ -560,6 +385,36 @@
         // Toast
         toastContainer:   document.getElementById('toast-container'),
       };
+
+      /* ------------------------------------------------------------------ */
+      /*  Platform Config                                                    */
+      /* ------------------------------------------------------------------ */
+      const PLATFORMS = {
+        instagram: { name: 'Instagram', charLimit: 2200, hint: "Posts will be optimized for Instagram's style and character limits." },
+        facebook:  { name: 'Facebook',  charLimit: 5000, hint: "Posts will be optimized for Facebook's conversational style." },
+        linkedin:  { name: 'LinkedIn',  charLimit: 3000, hint: "Posts will be optimized for LinkedIn's professional tone." },
+        twitter:   { name: 'X / Twitter', charLimit: 280, hint: "Posts will be optimized for X/Twitter's 280-character limit." },
+      };
+
+      let selectedPlatform = 'instagram';
+
+      function selectPlatform(platform) {
+        selectedPlatform = platform;
+        var btns = els.platformSelector.querySelectorAll('.platform-btn');
+        btns.forEach(function (btn) {
+          var isActive = btn.dataset.platform === platform;
+          btn.classList.toggle('active', isActive);
+          btn.setAttribute('aria-checked', isActive ? 'true' : 'false');
+        });
+        els.platformHint.textContent = PLATFORMS[platform].hint;
+      }
+
+      els.platformSelector.addEventListener('click', function (e) {
+        var btn = e.target.closest('.platform-btn');
+        if (btn && btn.dataset.platform) {
+          selectPlatform(btn.dataset.platform);
+        }
+      });
 
       /* ------------------------------------------------------------------ */
       /*  Video Generation                                                   */
@@ -593,32 +448,22 @@
         if (isGeneratingVideo) return;
         var topic = els.videoTopic.value.trim();
         if (!topic) return;
-
         setVideoGenerating(true);
         els.videoOutput.classList.add('hidden');
         els.videoPromptDisplay.classList.add('hidden');
-
         try {
           var response = await fetch('/generate-video', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ topic: topic }),
           });
-
           var data;
           try { data = await response.json(); } catch (e) { data = {}; }
-
-          if (!response.ok) {
-            throw new Error(data.error || 'Video generation failed (HTTP ' + response.status + ')');
-          }
-
-          // Show AI-crafted prompt
+          if (!response.ok) throw new Error(data.error || 'Video generation failed (HTTP ' + response.status + ')');
           if (data.videoPrompt) {
             els.videoPromptText.textContent = data.videoPrompt;
             els.videoPromptDisplay.classList.remove('hidden');
           }
-
-          // Show video
           if (data.videoUrl) {
             currentVideoUrl = data.videoUrl;
             els.veoVideo.src = data.videoUrl;
@@ -642,11 +487,8 @@
           var blob = await response.blob();
           var url = URL.createObjectURL(blob);
           var a = document.createElement('a');
-          a.href = url;
-          a.download = 'veo-video.mp4';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
+          a.href = url; a.download = 'golden-crumb-video.mp4';
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
           setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
           showToast('Downloaded!');
         } catch (err) {
@@ -659,26 +501,17 @@
       els.downloadVideoBtn.addEventListener('click', downloadVideo);
       els.videoTopic.addEventListener('keydown', function (e) {
         if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !els.generateVideoBtn.disabled) {
-          e.preventDefault();
-          generateVideo();
+          e.preventDefault(); generateVideo();
         }
       });
-
       updateVideoBtn();
 
       /* ------------------------------------------------------------------ */
       /*  State                                                              */
       /* ------------------------------------------------------------------ */
-      let profileSaved = false;
       let isGenerating  = false;
       let isRegenerating = false;
       let currentImageUrl = '';
-
-      const STORAGE_KEYS = {
-        who:  'li-gen-who',
-        what: 'li-gen-what',
-        cta:  'li-gen-cta',
-      };
 
       /* ------------------------------------------------------------------ */
       /*  Toast Notifications                                                */
@@ -689,24 +522,16 @@
         var bgColor = type === 'error' ? 'bg-red-600' : 'bg-gray-900';
         toast.className = 'toast-enter flex items-center gap-2 px-5 py-3 ' + bgColor + ' text-white text-sm font-medium rounded-macos shadow-lg max-w-xs';
         toast.setAttribute('role', 'alert');
-
-        var iconSvg = '';
-        if (type === 'error') {
-          iconSvg = '<svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
-        } else {
-          iconSvg = '<svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
-        }
-
+        var iconSvg = type === 'error'
+          ? '<svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+          : '<svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
         toast.innerHTML = iconSvg + '<span>' + escapeHtml(message) + '</span>';
         els.toastContainer.appendChild(toast);
-
         setTimeout(function () {
           toast.classList.remove('toast-enter');
           toast.classList.add('toast-exit');
           toast.addEventListener('animationend', function () {
-            if (toast.parentNode) {
-              toast.parentNode.removeChild(toast);
-            }
+            if (toast.parentNode) toast.parentNode.removeChild(toast);
           });
         }, 3000);
       }
@@ -720,93 +545,16 @@
         return div.innerHTML;
       }
 
-      function truncateText(text, maxLen) {
-        if (!text) return '';
-        return text.length > maxLen ? text.substring(0, maxLen) + '...' : text;
-      }
-
-      /* ------------------------------------------------------------------ */
-      /*  Profile: localStorage Persistence                                  */
-      /* ------------------------------------------------------------------ */
-      function saveProfile() {
-        var who  = els.whoYouAre.value.trim();
-        var what = els.whatYouDo.value.trim();
-        var cta  = els.callToAction.value.trim();
-
-        if (!who && !what && !cta) {
-          showToast('Please fill in at least one profile field', 'error');
-          return;
-        }
-
-        localStorage.setItem(STORAGE_KEYS.who, who);
-        localStorage.setItem(STORAGE_KEYS.what, what);
-        localStorage.setItem(STORAGE_KEYS.cta, cta);
-
-        profileSaved = true;
-        collapseProfile();
-        updateGenerateButton();
-        showToast('Profile Saved!');
-      }
-
-      function clearProfile() {
-        localStorage.removeItem(STORAGE_KEYS.who);
-        localStorage.removeItem(STORAGE_KEYS.what);
-        localStorage.removeItem(STORAGE_KEYS.cta);
-
-        els.whoYouAre.value = '';
-        els.whatYouDo.value = '';
-        els.callToAction.value = '';
-
-        profileSaved = false;
-        expandProfile();
-        updateGenerateButton();
-        showToast('Profile cleared');
-      }
-
-      function loadProfile() {
-        var who  = localStorage.getItem(STORAGE_KEYS.who) || '';
-        var what = localStorage.getItem(STORAGE_KEYS.what) || '';
-        var cta  = localStorage.getItem(STORAGE_KEYS.cta) || '';
-
-        if (who || what || cta) {
-          els.whoYouAre.value    = who;
-          els.whatYouDo.value    = what;
-          els.callToAction.value = cta;
-          profileSaved = true;
-          collapseProfile();
-        }
-      }
-
-      function collapseProfile() {
-        els.summaryWho.textContent  = truncateText(els.whoYouAre.value.trim(), 80);
-        els.summaryWhat.textContent = truncateText(els.whatYouDo.value.trim(), 80);
-        els.summaryCta.textContent  = truncateText(els.callToAction.value.trim(), 80);
-
-        els.profileFields.classList.add('collapsed');
-        els.profileSummary.classList.remove('hidden');
-        els.editProfileBtn.classList.remove('hidden');
-        els.editProfileBtn.classList.add('inline-flex');
-      }
-
-      function expandProfile() {
-        els.profileFields.classList.remove('collapsed');
-        els.profileSummary.classList.add('hidden');
-        els.editProfileBtn.classList.add('hidden');
-        els.editProfileBtn.classList.remove('inline-flex');
-      }
-
       /* ------------------------------------------------------------------ */
       /*  Generate Button State                                              */
       /* ------------------------------------------------------------------ */
       function updateGenerateButton() {
         var hasContent = els.contentIdea.value.trim().length > 0;
-        var canGenerate = profileSaved && hasContent && !isGenerating;
-        els.generateBtn.disabled = !canGenerate;
+        els.generateBtn.disabled = !hasContent || isGenerating;
       }
 
       function setGenerating(active) {
         isGenerating = active;
-
         if (active) {
           els.generateIcon.classList.add('hidden');
           els.generateSpinner.classList.remove('hidden');
@@ -815,7 +563,7 @@
         } else {
           els.generateIcon.classList.remove('hidden');
           els.generateSpinner.classList.add('hidden');
-          els.generateText.textContent = 'Generate LinkedIn Post';
+          els.generateText.textContent = 'Generate Post';
           updateGenerateButton();
         }
       }
@@ -845,7 +593,6 @@
 
       function setRegenerating(active) {
         isRegenerating = active;
-
         if (active) {
           els.regenIcon.classList.add('hidden');
           els.regenSpinner.classList.remove('hidden');
@@ -865,12 +612,8 @@
         setGenerating(true);
 
         var payload = {
-          persona: {
-            whoYouAre:    els.whoYouAre.value.trim(),
-            whatYouDo:    els.whatYouDo.value.trim(),
-            callToAction: els.callToAction.value.trim(),
-          },
           contentIdea: els.contentIdea.value.trim(),
+          platform: selectedPlatform,
         };
 
         try {
@@ -882,21 +625,22 @@
 
           if (!response.ok) {
             var errorData;
-            try {
-              errorData = await response.json();
-            } catch (e) {
-              errorData = null;
-            }
+            try { errorData = await response.json(); } catch (e) { errorData = null; }
             throw new Error((errorData && errorData.error) ? errorData.error : 'Generation failed (HTTP ' + response.status + ')');
           }
 
           var data = await response.json();
 
+          // Update output header with platform name
+          var platformName = data.platformName || PLATFORMS[selectedPlatform].name;
+          var charLimit = data.charLimit || PLATFORMS[selectedPlatform].charLimit;
+          els.outputPlatformLabel.textContent = 'Your ' + platformName + ' Post';
+
           // Populate post output
           els.postOutput.textContent = data.post || '';
           var postLen = (data.post || '').length;
-          els.postCharCount.textContent = postLen.toLocaleString() + ' / 3,000';
-          if (postLen > 3000) {
+          els.postCharCount.textContent = postLen.toLocaleString() + ' / ' + charLimit.toLocaleString();
+          if (postLen > charLimit) {
             els.postCharCount.classList.add('text-red-500');
             els.postCharCount.classList.remove('text-gray-400');
           } else {
@@ -909,8 +653,6 @@
 
           // Show output section
           els.outputSection.classList.remove('hidden');
-
-          // Scroll to output
           setTimeout(function () {
             els.outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }, 100);
@@ -920,7 +662,6 @@
             showImageResult(data.imageUrl);
             showToast('Post generated!');
           } else {
-            // Image generation failed on server — hide skeleton, keep prompt for manual regeneration
             els.imageSkeleton.classList.add('hidden');
             showToast('Post generated! Image failed — click Regenerate to retry.');
           }
@@ -936,35 +677,22 @@
       /* ------------------------------------------------------------------ */
       async function regenerateImage() {
         if (isRegenerating) return;
-
         var prompt = els.imagePrompt.value.trim();
-        if (!prompt) {
-          showToast('Please enter an image prompt', 'error');
-          return;
-        }
-
+        if (!prompt) { showToast('Please enter an image prompt', 'error'); return; }
         setRegenerating(true);
         showImageLoading();
-
         try {
           var response = await fetch('/regenerate-image', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ imagePrompt: prompt }),
           });
-
           if (!response.ok) {
             var errorData;
-            try {
-              errorData = await response.json();
-            } catch (e) {
-              errorData = null;
-            }
+            try { errorData = await response.json(); } catch (e) { errorData = null; }
             throw new Error((errorData && errorData.error) ? errorData.error : 'Image regeneration failed (HTTP ' + response.status + ')');
           }
-
           var data = await response.json();
-
           if (data.imageUrl) {
             showImageResult(data.imageUrl);
             showToast('Image regenerated!');
@@ -973,7 +701,6 @@
           }
         } catch (err) {
           els.imageSkeleton.classList.add('hidden');
-          // Restore previous image if available
           if (currentImageUrl) {
             els.imagePreviewContainer.classList.remove('hidden');
             els.imageActions.classList.remove('hidden');
@@ -985,15 +712,11 @@
       }
 
       /* ------------------------------------------------------------------ */
-      /*  Copy Text                                                          */
+      /*  Copy / Download                                                    */
       /* ------------------------------------------------------------------ */
       async function copyPostText() {
         var text = els.postOutput.textContent;
-        if (!text) {
-          showToast('No text to copy', 'error');
-          return;
-        }
-
+        if (!text) { showToast('No text to copy', 'error'); return; }
         try {
           await navigator.clipboard.writeText(text);
           showToast('Copied!');
@@ -1002,28 +725,14 @@
         }
       }
 
-      /* ------------------------------------------------------------------ */
-      /*  Copy Image                                                         */
-      /* ------------------------------------------------------------------ */
       async function copyImage() {
-        if (!currentImageUrl) {
-          showToast('No image to copy', 'error');
-          return;
-        }
-
+        if (!currentImageUrl) { showToast('No image to copy', 'error'); return; }
         try {
           var response = await fetch(currentImageUrl);
           var blob = await response.blob();
-
-          // Convert to PNG for clipboard compatibility
           var pngBlob = blob;
-          if (blob.type !== 'image/png') {
-            pngBlob = await convertToPng(blob);
-          }
-
-          await navigator.clipboard.write([
-            new ClipboardItem({ 'image/png': pngBlob })
-          ]);
+          if (blob.type !== 'image/png') pngBlob = await convertToPng(blob);
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]);
           showToast('Copied!');
         } catch (err) {
           showToast('Use right-click > Copy Image', 'error');
@@ -1036,50 +745,27 @@
           img.crossOrigin = 'anonymous';
           img.onload = function () {
             var canvas = document.createElement('canvas');
-            canvas.width = img.naturalWidth;
-            canvas.height = img.naturalHeight;
-            var ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
+            canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+            canvas.getContext('2d').drawImage(img, 0, 0);
             canvas.toBlob(function (pngBlob) {
-              if (pngBlob) {
-                resolve(pngBlob);
-              } else {
-                reject(new Error('PNG conversion failed'));
-              }
+              pngBlob ? resolve(pngBlob) : reject(new Error('PNG conversion failed'));
             }, 'image/png');
           };
-          img.onerror = function () {
-            reject(new Error('Image load failed'));
-          };
+          img.onerror = function () { reject(new Error('Image load failed')); };
           img.src = URL.createObjectURL(blob);
         });
       }
 
-      /* ------------------------------------------------------------------ */
-      /*  Download Image                                                     */
-      /* ------------------------------------------------------------------ */
       async function downloadImage() {
-        if (!currentImageUrl) {
-          showToast('No image to download', 'error');
-          return;
-        }
-
+        if (!currentImageUrl) { showToast('No image to download', 'error'); return; }
         try {
           var response = await fetch(currentImageUrl);
           var blob = await response.blob();
           var url = URL.createObjectURL(blob);
-
           var a = document.createElement('a');
-          a.href = url;
-          a.download = 'linkedin-post-image.png';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-
-          setTimeout(function () {
-            URL.revokeObjectURL(url);
-          }, 1000);
-
+          a.href = url; a.download = 'golden-crumb-post-image.png';
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
           showToast('Downloaded!');
         } catch (err) {
           showToast('Failed to download image', 'error');
@@ -1090,59 +776,32 @@
       /*  Character Count                                                    */
       /* ------------------------------------------------------------------ */
       function updateContentCharCount() {
-        var len = els.contentIdea.value.length;
-        els.contentCharCount.textContent = len.toLocaleString();
+        els.contentCharCount.textContent = els.contentIdea.value.length.toLocaleString();
       }
 
       /* ------------------------------------------------------------------ */
       /*  Event Listeners                                                    */
       /* ------------------------------------------------------------------ */
-
-      // Profile buttons
-      els.saveProfileBtn.addEventListener('click', saveProfile);
-      els.clearProfileBtn.addEventListener('click', clearProfile);
-      els.editProfileBtn.addEventListener('click', function () {
-        expandProfile();
-        els.whoYouAre.focus();
-      });
-
-      // Content idea — character count and button state
       els.contentIdea.addEventListener('input', function () {
         updateContentCharCount();
         updateGenerateButton();
       });
-
-      // Generate button
       els.generateBtn.addEventListener('click', generatePost);
-
-      // Regenerate image
       els.regenerateImageBtn.addEventListener('click', regenerateImage);
-
-      // Copy, download, copy image
       els.copyTextBtn.addEventListener('click', copyPostText);
       els.downloadImageBtn.addEventListener('click', downloadImage);
       els.copyImageBtn.addEventListener('click', copyImage);
 
-      // Keyboard: Enter on generate button
       els.generateBtn.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' && !els.generateBtn.disabled) {
-          e.preventDefault();
-          generatePost();
-        }
+        if (e.key === 'Enter' && !els.generateBtn.disabled) { e.preventDefault(); generatePost(); }
       });
-
-      // Keyboard: Cmd/Ctrl+Enter from content textarea to generate
       els.contentIdea.addEventListener('keydown', function (e) {
-        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !els.generateBtn.disabled) {
-          e.preventDefault();
-          generatePost();
-        }
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !els.generateBtn.disabled) { e.preventDefault(); generatePost(); }
       });
 
       /* ------------------------------------------------------------------ */
       /*  Initialization                                                     */
       /* ------------------------------------------------------------------ */
-      loadProfile();
       updateContentCharCount();
       updateGenerateButton();
     })();
